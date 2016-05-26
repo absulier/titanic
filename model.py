@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 from patsy import dmatrices
 from sklearn.linear_model import LogisticRegression as lr
 from sklearn.cross_validation import train_test_split, cross_val_score
-from sklearn import metrics
 from sklearn.metrics import classification_report as skcr
 from sklearn.metrics import confusion_matrix as skcm
+from sklearn.metrics import roc_curve as skrc
+from sklearn.metrics import auc
 import seaborn
 from sklearn.cross_validation import train_test_split as tts
 from sklearn.cross_validation import cross_val_score
@@ -62,4 +63,20 @@ s.std()
 #who died and an okay job predicting those who survived
 print skcr(y_test,pred)
 
+
+#(true negative) (false Negative)
+#(false negative) (true positive)
 print skcm(y_test,pred)
+
+#Cant remember the better way to parse this
+probs=[]
+for item in proba:
+    probs.append(item[1])
+
+false_positive_rate, true_positive_rate, thresholds = skrc(y_test,probs)
+roc_auc = auc(false_positive_rate, true_positive_rate)
+
+plt.title('ROC')
+plt.plot(false_positive_rate, true_positive_rate, 'r', label=roc_auc)
+plt.legend(loc='lower right')
+plt.show()
