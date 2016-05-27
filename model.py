@@ -12,6 +12,7 @@ from sklearn.grid_search import GridSearchCV as skgs
 import seaborn
 from sklearn.cross_validation import train_test_split as tts
 from sklearn.cross_validation import cross_val_score
+from sklearn.neighbors import KNeighborsClassifier as knn
 %matplotlib inline
 
 df=pd.read_csv('titanic.csv')
@@ -67,7 +68,7 @@ s.std()
 #who died and an okay job predicting those who survived
 print skcr(y_test,pred)
 
-#(true negative) (false Negative)
+#(true negative) (false positive)
 #(false negative) (true positive)
 print skcm(y_test,pred)
 
@@ -107,3 +108,72 @@ print grid.score(x_test,y_test)
 #predicted survivals were true survivals. However, we would become less confident
 #that our deaths were true death. We would reduce our false positive rate, but
 #increase our false negative rate.
+
+
+#KNN
+#does not perform as well as LogReg, even with GridSeach
+knn =knn()
+knn.fit(x_train,y_train)
+knn.score(x_test,y_test)
+
+gridknn=skgs(knn,{'n_neighbors':range(1,55)},cv=12,scoring='accuracy')
+gridknn.fit(x_train,y_train)
+print gridknn.best_estimator_
+print gridknn.score(x_test,y_test)
+#As we use more neighbors, our model becomes more bias because it becomes more complex
+#Logistice regression is usually a better choice than KNN because it is a more sophisticated
+#model and it requires less storage to run. KNN is a good model if you are looking
+#for something simple, the data set is not too large, and you want as transparent
+#of a model as possible.
+knnpred=gridknn.predict(x_test)
+print skcm(y_test,knnpred)
+#with knn, we got more true negatives, and less false positives,
+#but we did much worse at classifying true positives from false negatives.
+
+
+
+#ROC for both tests
+probaknn=gridknn.predict_proba(x_test)
+probsknn=[]
+for item in probaknn:
+    probsknn.append(item[1])
+
+
+false_positive_rateknn, true_positive_rateknn, thresholdsknn = skrc(y_test,probsknn)
+roc_aucknn = auc(false_positive_rateknn, true_positive_rateknn)
+
+
+plt.title('ROC')
+plt.plot(false_positive_rate, true_positive_rate, 'r', label='LogReg %f'%roc_auc)
+plt.plot(false_positive_rateknn, true_positive_rateknn, 'b', label='KNN %f'%roc_aucknn)
+plt.legend(loc='lower right')
+plt.show()
+
+#LogReg Gridsearch with average_percision
+gridap=skgs(model,logreg_parameters,cv=12,scoring='average_precision')
+gridap.fit(x_train,y_train)
+print gridap.best_estimator_
+gridap.score(x_test,y_test)
+#this model scores much better than the logreg accuracy model in part 5
+
+appred=gridap.predict(x_test)
+print skcm(y_test,appred)
+#The confision matrix is almost the same as regular logreg, but with one more false
+#positive, which is strange since this model actually scored better
+
+probaap=gridap.predict_proba(x_test)
+probsap=[]
+for item in probaap:
+    probsap.append(item[1])
+
+probsap
+
+len(y_test)
+len(probsap)
+false_positive_rateap, true_positive_rateap, thresholdsap = skrc(y_test,probsap)
+roc_aucap = auc(false_positive_rateap, true_positive_rateap)
+
+plt.title('ROC')
+plt.plot(false_positive_rateap, true_positive_rateap, 'b', label='LogReg (AP) %f'%roc_aucap)
+plt.legend(loc='lower right')
+plt.show()
